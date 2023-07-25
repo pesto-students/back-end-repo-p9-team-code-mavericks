@@ -5,6 +5,33 @@ const FollowingsModel = require('../models/followings');
 const bcrypt = require('bcrypt');
 const { generateToken } = require('../service/jwt_authentication');
 
+async function handleUnfollowUser(req, res){
+  const loggedInUser = req.userId; 
+  const unfollowUserId = req.body.userId;
+
+  try{
+    const followingUpdate = await FollowingsModel.updateOne(
+      { userId: loggedInUser },
+      { $pull: { followings: unfollowUserId } }
+    );
+  }catch(err){
+    res.json({error: "Something went wrong while updating followings table of logged in user: "+err});
+  }
+  
+  
+  try{
+    const followersUpdate = await FollowersModel.updateOne(
+      { userId: unfollowUserId },
+      { $pull: { followers: loggedInUser } }
+    );
+
+    console.log("Log : "+JSON.stringify(followersUpdate));
+  }catch(err){
+    res.json({error: "Something went wrong while updating followers table of logged in user: "+err});
+  }
+
+  res.status(200).json({message: "You unfollowed the user successfully."});
+}
 
 async function handleGetFollowersList(req, res){
   const loggedInUser = req.userId;
@@ -13,7 +40,7 @@ async function handleGetFollowersList(req, res){
     if(allFollowersRec)
       res.json({followers:allFollowersRec.followers});
     else
-      res.json({followersError: "Didn't find any such logged in usere"});
+      res.json({followersError: "Didn't find any followers."});
   } catch(err){
     res.json({error: err});
   }  
@@ -228,5 +255,6 @@ module.exports = {
   handleGetUserIdByEmail,
   handleGetUserIdByUsername,
   handleGetFollowersList,
-  handleGetFollowingsList
+  handleGetFollowingsList,
+  handleUnfollowUser,
 }
