@@ -1,6 +1,37 @@
 const PostsModel = require('../models/posts');
 const FollowingsModel = require('../models/followings');
 const mongoose = require('mongoose');
+const BookmarksModel = require('../models/bookmark');
+
+async function handleBookmarkPost(req, res){
+  const postId = req.params.id;
+  const bookmarkFlag = req.params.flag;
+  const loggedInUser = req.userId;
+
+  if(bookmarkFlag == '1'){
+    console.log("Inside 1");
+    const newRec = new BookmarksModel({
+      userId: loggedInUser,
+      postId: postId,
+    });
+
+    const createBookMark = await newRec.save();
+
+    if (createBookMark) {
+      return res.status(200).json({ status: 200 });
+    } else {
+      return res.status(500).json({ error: 'Failed to bookmark the post.' });
+    }
+  }else if(bookmarkFlag == '0'){
+    console.log("Inside 0");
+    try {
+      const result = await BookmarksModel.deleteOne({ userId: loggedInUser, postId: postId });
+      res.status(200).json({message: 'Post un-bookmarked successfully:'});
+    } catch (error) {
+      res.status(404).json({message:'Post un-bookmark failed with error: '+ error});
+    }
+  }
+}
 
 async function handleCreatePost(req, res){
   try {
@@ -126,5 +157,6 @@ async function handleUpdateLike(req, res){
 module.exports = {
   handleRetrievePost,
   handleCreatePost,
-  handleUpdateLike
+  handleUpdateLike,
+  handleBookmarkPost,
 }
