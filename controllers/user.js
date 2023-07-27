@@ -125,8 +125,11 @@ async function handleUserLogin(req, res) {
 }
 
 async function handleUserLogout(req, res) {
-  // Need to implement
-  return res.status(200).json({ message: 'User logged out needs to be implemented' });
+  // Clear the JWT token from the browser's cookies
+  res.clearCookie('token');
+  
+  // Send a response to indicate successful logout
+  res.status(200).json({ message: 'Logged out successfully' });
 }
 
 async function handleFollowUser(req, res) {
