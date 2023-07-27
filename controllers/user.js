@@ -121,7 +121,7 @@ async function handleUserLogin(req, res) {
   const token = generateToken(userQuery);
   const userName = userQuery.username;
   res.cookie('token', token);
-  return res.status(200).json({ message: 'User logged in successfully', username: userName});
+  return res.status(200).json({ message: 'User logged in successfully', username: userName, token: token});
 }
 
 async function handleUserLogout(req, res) {
