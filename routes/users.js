@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { handleUnfollowUser, handleGetFollowingsList, handleGetUserIdByUsername, handleIsFollowing, handleGetUserIdByEmail, handleFollowUser, handleLoggedInUser, handleUserLogout, handleGetFollowersList } = require('../controllers/user');
+const { handleUnfollowUser, handleGetFollowingsList, handleGetUserIdByUsername, handleIsFollowing, handleGetUserIdByEmail, handleFollowUser, handleLoggedInUser, handleUserLogout, handleGetFollowersList, handleGetBookmarkList } = require('../controllers/user');
 
 /* GET users listing. */
 router.get('/', function (req, res, next) {
@@ -17,6 +17,7 @@ router.get('/logout', handleUserLogout);
 router.get('/username/:username', handleGetUserIdByUsername);
 router.get('/followers',handleGetFollowersList);
 router.get('/followings',handleGetFollowingsList);
+router.get('/bookmarklist', handleGetBookmarkList);
 router.post('/unfollow', handleUnfollowUser);
 
 module.exports = router;

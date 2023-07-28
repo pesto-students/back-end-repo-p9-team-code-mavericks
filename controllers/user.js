@@ -1,10 +1,22 @@
 const UserModel = require('../models/user');
 const FollowersModel = require('../models/followers');
 const FollowingsModel = require('../models/followings');
+const BookmarksModel = require('../models/bookmark');
+const PostsModel = require('../models/posts');
 
 const bcrypt = require('bcrypt');
 const { generateToken } = require('../service/jwt_authentication');
 
+async function handleGetBookmarkList(req, res){
+  const loggedInUser = req.userId;
+  try{
+    const bookmarkPostsIds = await BookmarksModel.distinct('postId', { userId: loggedInUser });
+    const bookmarkedPosts = await PostsModel.find({ _id: { $in: bookmarkPostsIds }}, {_id:0, __v:0} );
+    res.json({bookmarks: bookmarkedPosts});
+  } catch(err){
+    res.status(500).json({error: err});
+  }
+}
 async function handleUnfollowUser(req, res){
   const loggedInUser = req.userId; 
   const unfollowUserId = req.body.userId;
@@ -268,5 +280,6 @@ module.exports = {
   handleGetUserIdByUsername,
   handleGetFollowersList,
   handleGetFollowingsList,
+  handleGetBookmarkList,,
   handleUnfollowUser,
 }

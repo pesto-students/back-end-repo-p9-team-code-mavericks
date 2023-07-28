@@ -9,7 +9,6 @@ async function handleBookmarkPost(req, res){
   const loggedInUser = req.userId;
 
   if(bookmarkFlag == '1'){
-    console.log("Inside 1");
     const newRec = new BookmarksModel({
       userId: loggedInUser,
       postId: postId,
@@ -23,7 +22,6 @@ async function handleBookmarkPost(req, res){
       return res.status(500).json({ error: 'Failed to bookmark the post.' });
     }
   }else if(bookmarkFlag == '0'){
-    console.log("Inside 0");
     try {
       const result = await BookmarksModel.deleteOne({ userId: loggedInUser, postId: postId });
       res.status(200).json({message: 'Post un-bookmarked successfully:'});
@@ -32,6 +30,7 @@ async function handleBookmarkPost(req, res){
     }
   }
 }
+
 
 async function handleCreatePost(req, res){
   try {
