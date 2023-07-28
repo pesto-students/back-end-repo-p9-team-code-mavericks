@@ -66,7 +66,15 @@ async function handleLoggedInUser(req, res) {
     if (!retrievedUser) {
       return res.json({ error: 'User not found' });
     }
-    return res.json({ message: 'Successfully retrieved', email: retrievedUser.email, username: retrievedUser.username });
+    const userDetails = {
+      email: retrievedUser.email,
+      username: retrievedUser.username,
+      firstname: retrievedUser.firstname,
+      lastname: retrievedUser.lastname,
+      contact: retrievedUser.contact,
+      liked_posts: retrievedUser.liked_posts,
+    }
+    return res.status(200).json({ message: 'Successfully retrieved', user_details: userDetails });
   } catch (error) {
     console.error('Error retrieving user:', error);
     return res.status(500).json({ error: 'Failed during retrieval of user' });
