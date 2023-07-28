@@ -280,6 +280,6 @@ module.exports = {
   handleGetUserIdByUsername,
   handleGetFollowersList,
   handleGetFollowingsList,
-  handleGetBookmarkList,,
+  handleGetBookmarkList,
   handleUnfollowUser,
 }
