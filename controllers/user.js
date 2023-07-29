@@ -17,6 +17,7 @@ async function handleGetBookmarkList(req, res){
     res.status(500).json({error: err});
   }
 }
+
 async function handleUnfollowUser(req, res){
   const loggedInUser = req.userId; 
   const unfollowUserId = req.body.userId;
@@ -36,8 +37,6 @@ async function handleUnfollowUser(req, res){
       { userId: unfollowUserId },
       { $pull: { followers: loggedInUser } }
     );
-
-    console.log("Log : "+JSON.stringify(followersUpdate));
   }catch(err){
     res.json({error: "Something went wrong while updating followers table of logged in user: "+err});
   }
@@ -46,9 +45,45 @@ async function handleUnfollowUser(req, res){
 }
 
 async function handleGetFollowersList(req, res){
-  const loggedInUser = req.userId;
+
+  // Get current logged in user Id.
+  const loggedInUserId = req.userId;
+
+  // Get username that was passed in get request.
+  const ofUser = req.params.ofuser;
+
+  // Set -> looking for followers of user that is currently logged in.
+  let lookForUserId = loggedInUserId;
+
+  // if logged in user is diff from user whose followers are requested. 
+  if(ofUser != req.userName){
+    try{
+      const ofUserRec = await UserModel.findOne({username: ofUser});
+
+      if(!ofUserRec){
+        return res.status(404).json({error: "User not found."});
+      }
+
+      // Check if the profile of user passed in get request is public.
+      if(!ofUserRec.is_public){
+        return res.status(401).json({error: "User profile is not public"});
+      }
+
+      // Check if user that was passed in get request allows others to view their followers.
+      if(ofUserRec.followers_hidden){
+        return res.status(401).json({error: "User don't allow to view their followers."});
+      }
+      
+      // Set -> Looking for followers of user that was passed in get request.
+      lookForUserId = ofUserRec._id;
+    } catch(err){
+      res.status(500).json({error: "Error:"+err});
+    }
+  }
+
+  // Now get all the followers of user that was set in 'lookForUserId' variable.
   try{
-    const allFollowersRec = await FollowersModel.findOne({userId: loggedInUser});
+    const allFollowersRec = await FollowersModel.findOne({userId: lookForUserId});
     if(allFollowersRec){
       const allFollowersId = allFollowersRec.followers;
       const allFollowers = await UserModel.find({ _id: { $in: allFollowersId }},{ _id: 0, username: 1, firstname: 1, lastname: 1 });
@@ -63,7 +98,6 @@ async function handleGetFollowersList(req, res){
 
 async function handleGetFollowingsList(req, res){
   const loggedInUser = req.userId;
-  console.log("Logged in user is ", loggedInUser);
   try{
     const allFollowingsRec = await FollowingsModel.findOne({userId: loggedInUser});
     if(allFollowingsRec){
@@ -161,7 +195,6 @@ async function handleUserLogout(req, res) {
 async function handleFollowUser(req, res) {
   const loggedInUserId = req.userId;
   const followUsername = req.params.username;
-  console.log(followUsername);
   try {
     const userRec = await UserModel.findOne({ username: followUsername });
     if (!userRec) {
@@ -212,8 +245,7 @@ async function handleIsFollowing(req, res) {
 
   try {
     const userRec = await UserModel.findOne({ username: userNameToCheck });
-    console.log('username to check '+userNameToCheck);
-    console.log('userRec is :'+userRec)
+
     if (!userRec) {
       return res.status(404).json({ message: "User with such username to follow is not found." });
     }
