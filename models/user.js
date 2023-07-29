@@ -11,6 +11,11 @@ const userSchema = new mongoose.Schema({
   interests: { type: [String] },
   last_active: { type: Date },
   liked_posts: {type: [mongoose.Schema.Types.ObjectId]},
+  is_public: {type: Boolean, default: true},
+  contact_hidden: {type: Boolean, default: false},
+  email_hidden: {type: Boolean, default: false},
+  followers_hidden: {type: Boolean, default: false},
+  following_hidden: {type: Boolean, default: false},
 }, {
   timestamps: true,
 },);
