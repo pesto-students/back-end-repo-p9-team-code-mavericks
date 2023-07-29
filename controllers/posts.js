@@ -2,6 +2,7 @@ const PostsModel = require('../models/posts');
 const FollowingsModel = require('../models/followings');
 const mongoose = require('mongoose');
 const BookmarksModel = require('../models/bookmark');
+const PostsInDetailModel = require('../models/posts_in_detail');
 
 async function handleBookmarkPost(req, res){
   const postId = req.params.id;
@@ -34,17 +35,14 @@ async function handleBookmarkPost(req, res){
 
 async function handleCreatePost(req, res){
   try {
-    const { ispublic, recipe_steps, recipe_ingredients, recipe_category, recipe_thumbnail, recipe_name } = req.body;
+    const { ispublic, recipe_steps, recipe_ingredients, recipe_category, recipe_description, recipe_title } = req.body;
     const author = req.userId;
 
     // Create a new Post object based on the PostsModel
     const newPost = new PostsModel({
       author: author,
-      recipe_name: recipe_name,
-      recipe_thumbnail: recipe_thumbnail,
-      recipe_category: recipe_category, 
-      recipe_ingredients: recipe_ingredients, 
-      recipe_steps: recipe_steps, 
+      recipe_title: recipe_title,
+      recipe_description: recipe_description,
       ispublic: ispublic,
       recipe_likes: 0,
     });
@@ -54,10 +52,20 @@ async function handleCreatePost(req, res){
 
     // Check if the Post was created successfully
     if (createdPost) {
-      // Return a JSON response indicating success
-      return res.status(200).json({ message: 'Post created successfully' });
+      const newPostsInDetail = new PostsInDetailModel({
+        post_id: createdPost._id,
+        recipe_category: recipe_category, 
+        recipe_ingredients: recipe_ingredients, 
+        recipe_steps: recipe_steps, 
+      });
+
+      const createPostsInDetailRec = await newPostsInDetail.save();
+
+      if(createPostsInDetailRec)
+        return res.status(200).json({ message: 'Post created successfully' });
+      else
+        return res.status(500).json({error: 'Failed to create record in in-detail posts section.'});
     } else {
-      // Return a JSON response indicating failure
       return res.status(500).json({ error: 'Failed to create Post' });
     }
   } catch (err) {
@@ -119,10 +127,10 @@ async function handleRetrievePost(req, res){
       //   currentPage: page,
       //   totalPages: Math.ceil(totalPosts / perPage),
       // });
-      res.json({message: postFeed});
+      res.json({feeds: postFeed});
     }
     else{
-      res.json({message:"No followings"});
+      res.json({error:"No followings"});
     }
   } catch (err) {
     console.error("Error retrieving posts:", err);
