@@ -259,15 +259,23 @@ async function handleGetUserIdByEmail(req, res) {
 }
 
 // API using this controller should not be provided to any third party as it return the user_id. Only for internal use.
-async function handleGetUserIdByUsername(req, res) {
+async function handleGetUserDetailsByUsername(req, res) {
   const userName = req.params.username;
   try {
-    const userRec = await UserModel.findOne({ username: userName });
+    const userRec = await UserModel.findOne({ username: userName }, {_id: 0});
     if (!userRec) {
-      return res.status(404).json({ message: "User with such username not found." });
+      return res.status(404).json({ Error: "User with such username not found." });
     }
     else {
-      return res.status(200).json({ message: userRec._id });
+      const respObj = {Username: userRec.username, Firstname: userRec.firstname, Lastname: userRec.lastname };
+      if(!userRec.is_public)
+        return res.status(200).json({ user_details: respObj});
+      if(!userRec.email_hidden)
+        respObj['Email'] = userRec.email;
+      if(!userRec.contact_hidden)
+        respObj['Contact'] = userRec.contact;
+
+      return res.status(200).json({user_details: respObj});
     }
   } catch (error) {
     console.log("Something went wrong while trying to find user by its username.");
@@ -283,7 +291,7 @@ module.exports = {
   handleUserLogout,
   handleFollowUser,
   handleGetUserIdByEmail,
-  handleGetUserIdByUsername,
+  handleGetUserDetailsByUsername,
   handleGetFollowersList,
   handleGetFollowingsList,
   handleGetBookmarkList,
