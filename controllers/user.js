@@ -97,16 +97,50 @@ async function handleGetFollowersList(req, res){
 }
 
 async function handleGetFollowingsList(req, res){
-  const loggedInUser = req.userId;
+  // Get current logged in user Id.
+  const loggedInUserId = req.userId;
+
+  // Get username that was passed in get request.
+  const ofUser = req.params.ofuser;
+
+  // Set -> looking for following of user that is currently logged in.
+  let lookForUserId = loggedInUserId;
+
+  // if logged in user is diff from user whose followings list is requested. 
+  if(ofUser != req.userName){
+    try{
+      const ofUserRec = await UserModel.findOne({username: ofUser});
+
+      if(!ofUserRec){
+        return res.status(404).json({error: "User not found."});
+      }
+
+      // Check if the profile of user passed in get request is public.
+      if(!ofUserRec.is_public){
+        return res.status(401).json({error: "User profile is not public"});
+      }
+
+      // Check if user that was passed in get request allows others to view their followers.
+      if(ofUserRec.following_hidden){
+        return res.status(401).json({error: "User don't allow to view their followings."});
+      }
+      
+      // Set -> Looking for followers of user that was passed in get request.
+      lookForUserId = ofUserRec._id;
+    } catch(err){
+      res.status(500).json({error: "Error:"+err});
+    }
+  }
+
   try{
-    const allFollowingsRec = await FollowingsModel.findOne({userId: loggedInUser});
+    const allFollowingsRec = await FollowingsModel.findOne({userId: lookForUserId});
     if(allFollowingsRec){
       const allFollowingIds = allFollowingsRec.followings;
       const allFollowings = await UserModel.find({ _id: { $in: allFollowingIds }},{ _id: 0, username: 1, firstname: 1, lastname: 1 });
       res.json({followings:allFollowings});
     }
     else
-      res.json({message: "Didn't find any such logged in user"});
+      res.status(404).json({message: "Didn't find any such logged in user"});
   } catch(err){
     res.json({error: err});
   }  
