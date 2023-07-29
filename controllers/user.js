@@ -49,8 +49,11 @@ async function handleGetFollowersList(req, res){
   const loggedInUser = req.userId;
   try{
     const allFollowersRec = await FollowersModel.findOne({userId: loggedInUser});
-    if(allFollowersRec)
-      res.json({followers:allFollowersRec.followers});
+    if(allFollowersRec){
+      const allFollowersId = allFollowersRec.followers;
+      const allFollowers = await UserModel.find({ _id: { $in: allFollowersId }},{ _id: 0, username: 1, firstname: 1, lastname: 1 });
+      res.json({followers:allFollowers});
+    }
     else
       res.json({followersError: "Didn't find any followers."});
   } catch(err){
@@ -63,10 +66,13 @@ async function handleGetFollowingsList(req, res){
   console.log("Logged in user is ", loggedInUser);
   try{
     const allFollowingsRec = await FollowingsModel.findOne({userId: loggedInUser});
-    if(allFollowingsRec)
-      res.json({message:allFollowingsRec.followings});
+    if(allFollowingsRec){
+      const allFollowingIds = allFollowingsRec.followings;
+      const allFollowings = await UserModel.find({ _id: { $in: allFollowingIds }},{ _id: 0, username: 1, firstname: 1, lastname: 1 });
+      res.json({followings:allFollowings});
+    }
     else
-      res.json({message: "Didn't find any such logged in usere"});
+      res.json({message: "Didn't find any such logged in user"});
   } catch(err){
     res.json({error: err});
   }  
