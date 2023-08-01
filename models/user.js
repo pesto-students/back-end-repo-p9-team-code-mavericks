@@ -16,6 +16,7 @@ const userSchema = new mongoose.Schema({
   email_hidden: {type: Boolean, default: false},
   followers_hidden: {type: Boolean, default: false},
   following_hidden: {type: Boolean, default: false},
+  first_time_login: {type: Boolean, default: true},
 }, {
   timestamps: true,
 },);

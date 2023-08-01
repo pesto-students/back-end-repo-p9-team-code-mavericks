@@ -7,6 +7,24 @@ const PostsModel = require('../models/posts');
 const bcrypt = require('bcrypt');
 const { generateToken } = require('../service/jwt_authentication');
 
+async function handleInterests(req, res){
+  const loggedInUserId = req.userId;
+  const { interests } = req.body;
+  try {
+    const userRec = await UserModel.findByIdAndUpdate(loggedInUserId, { interests, first_time_login: false }, { new: true });
+
+    if (!userRec) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    return res.status(200).json({ message: 'User first_time_login set to false successfully', userRec });
+  } catch (err) {
+    console.error('Error updating user:', err);
+    res.status(500).json({ err: 'Server error: '+err });
+  }
+
+}
+
 async function handleGetBookmarkList(req, res){
   const loggedInUser = req.userId;
   try{
@@ -214,8 +232,10 @@ async function handleUserLogin(req, res) {
 
   const token = generateToken(userQuery);
   const userName = userQuery.username;
+  const firstTimeLogin = userQuery.first_time_login;
+
   res.cookie('token', token);
-  return res.status(200).json({ message: 'User logged in successfully', username: userName, token: token});
+  return res.status(200).json({ message: 'User logged in successfully', username: userName, token: token, first_time_login: firstTimeLogin });
 }
 
 async function handleUserLogout(req, res) {
@@ -362,4 +382,5 @@ module.exports = {
   handleGetFollowingsList,
   handleGetBookmarkList,
   handleUnfollowUser,
+  handleInterests,
 }
