@@ -8,6 +8,9 @@ const bookmarkSchema = new mongoose.Schema({
   timestamps: true,
 },);
 
+// Create a compound index on userId and postId to ensure uniqueness
+bookmarkSchema.index({ userId: 1, postId: 1 }, { unique: true });
+
 const BookmarksModel = mongoose.model('bookmarks', bookmarkSchema);
 
 module.exports = BookmarksModel;

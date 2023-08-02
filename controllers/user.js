@@ -222,12 +222,12 @@ async function handleUserLogin(req, res) {
   const { email, password } = req.body;
   const userQuery = await UserModel.findOne({ email });
   if (!userQuery) {
-    return res.json({ error: "User don't exists." });
+    return res.status(404).json({ error: "User not exists." });
   }
 
   const match = await bcrypt.compare(password, userQuery.password);
   if (!match) {
-    return res.status(401).send('Invalid email or password');
+    return res.status(401).json({error: 'Invalid email or password'});
   }
 
   const token = generateToken(userQuery);

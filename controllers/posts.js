@@ -27,7 +27,7 @@ async function handleBookmarkPost(req, res){
       const result = await BookmarksModel.deleteOne({ userId: loggedInUser, postId: postId });
       res.status(200).json({message: 'Post un-bookmarked successfully:'});
     } catch (error) {
-      res.status(404).json({message:'Post un-bookmark failed with error: '+ error});
+      res.status(404).json({error:'Post un-bookmark failed with error: '+ error});
     }
   }
 }
@@ -78,17 +78,54 @@ async function handleCreatePost(req, res){
 
 
 async function handleRetrievePost(req, res){
-  const loggedInUserId = req.userId; // Assuming you have a middleware that sets the user in the request object after successful authentication
-  
+  const loggedInUserId = req.userId;
   try {
     // Step 1: Fetch the users that the logged-in user follows
     const followingUsers = await FollowingsModel.findOne({userId: loggedInUserId});
 
     if(followingUsers){
       // Step 2: Fetch recent posts from users that the logged-in user follows
-      const recentPostsFromFollowing = await PostsModel.find({ author: { $in: followingUsers.followings } }).limit(10);
-      console.log('Posts are: ',recentPostsFromFollowing);
-
+      const recentPostsFromFollowing = await PostsModel.aggregate([
+        {
+          $match: { author: { $in: followingUsers.followings } }
+        },
+        {
+          $lookup: {
+            from: 'bookmarks',
+            let: { postId: '$_id' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ['$postId', '$$postId'] },
+                      { $eq: ['$userId', new mongoose.Types.ObjectId(loggedInUserId)] } // Check if the post is bookmarked by the logged-in user
+                    ]
+                  }
+                }
+              }
+            ],
+            as: 'bookmarkData'
+          }
+        },
+        {
+          $addFields: {
+            bookmarked: {
+              $cond: {
+                if: { $gt: [{ $size: '$bookmarkData' }, 0] },
+                then: true,
+                else: false
+              }
+            },
+          }
+        },
+        {
+          $project: {
+            bookmarkData: 0, // Exclude the bookmarkData field
+          }
+        },
+      ]);
+      
       // // Step 3: Fetch random posts based on previous liked posts and interests
       // const previousLikedPosts = loggedInUser.likedPosts; // Assuming you have a field 'likedPosts' in your user schema that stores the IDs of posts the user has liked
       // const userInterests = loggedInUser.interests; // Assuming you have a field 'interests' in your user schema that stores the user's interests
