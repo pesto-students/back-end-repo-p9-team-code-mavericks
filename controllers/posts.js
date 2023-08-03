@@ -3,6 +3,8 @@ const FollowingsModel = require('../models/followings');
 const mongoose = require('mongoose');
 const BookmarksModel = require('../models/bookmark');
 const PostsInDetailModel = require('../models/posts_in_detail');
+const LikesModel = require('../models/like');
+const PostModel = require('../models/posts');
 
 async function handleBookmarkPost(req, res){
   const postId = req.params.id;
@@ -109,10 +111,36 @@ async function handleRetrievePost(req, res){
           }
         },
         {
+          $lookup: {
+            from: 'likes',
+            let: { postId: '$_id'},
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ['$postId', '$$postId'] },
+                      { $eq: ['$userId', new mongoose.Types.ObjectId(loggedInUserId)] } // Check if the post is bookmarked by the logged-in user
+                    ]
+                  }
+                }
+              }
+            ],
+            as: 'likesData'
+          }
+        },
+        {
           $addFields: {
             bookmarked: {
               $cond: {
                 if: { $gt: [{ $size: '$bookmarkData' }, 0] },
+                then: true,
+                else: false
+              }
+            },
+            liked: {
+              $cond: {
+                if: {$gt: [{$size: '$likesData'}, 0]},
                 then: true,
                 else: false
               }
@@ -122,6 +150,7 @@ async function handleRetrievePost(req, res){
         {
           $project: {
             bookmarkData: 0, // Exclude the bookmarkData field
+            likesData: 0,
           }
         },
       ]);
@@ -176,25 +205,38 @@ async function handleRetrievePost(req, res){
 }
 
 
-async function handleUpdateLike(req, res){
+// Function to handle liking/disliking a post with atomicity
+async function handleUpdateLike(req, res) {
+  const loggedInUserId = req.userId;
+  const {postId, likeFlag} = req.body;
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const { postId, incDecCnt } = req.body; // Assuming you pass the document ID in the request body
+    // Find the post and update 'likes_cnt' field
+    const updateQuery = likeFlag == '1' ? { $inc: { recipe_likes: 1 } } : { $inc: { recipe_likes: -1 } };
+    const updatedPost = await PostModel.findOneAndUpdate({ _id: postId }, updateQuery, {
+      new: true,
+      session,
+    });
 
-    // Update the recipe_likes using findOneAndUpdate with $inc operator
-    const updatedDocument = await PostsModel.findOneAndUpdate(
-      { _id: new mongoose.Types.ObjectId(postId) }, // Query to find the document by its ID
-      { $inc: { recipe_likes: incDecCnt } }, // Increment the recipe_likes by 1 (or any other number)
-      { new: true } // Return the updated document instead of the old one
-    );
-
-    if (!updatedDocument) {
-      return res.status(404).json({ message: 'Document not found' });
+    // Insert or delete the like record in LikesModel
+    if (likeFlag == '1') {
+      const createLikes = await LikesModel.create([{ userId: loggedInUserId, postId: postId }], { session });
+    } else {
+      await LikesModel.deleteOne({ userId: loggedInUserId, postId: postId }, { session });
     }
 
-    return res.status(200).json(updatedDocument);
+    // Commit the transaction
+    await session.commitTransaction();
+    session.endSession();
+    return res.status(200).json({message: "Updated the likes data", total_likes: updatedPost.recipe_likes});
   } catch (err) {
-    console.error('Error updating recipe_likes:', err);
-    return res.status(500).json({ message: 'Internal Server Error' });
+    // If any error occurs, abort the transaction and handle the error
+    await session.abortTransaction();
+    session.endSession();
+    return res.status(500).json({error: "Error occured while updating likes "+err});
   }
 }
 

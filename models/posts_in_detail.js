@@ -10,6 +10,8 @@ const postsInDetailSchema = new mongoose.Schema({
   timestamps: true,
 },);
 
+postsInDetailSchema.index({ post_id: 1 }, { unique: true });
+
 const PostsInDetailModel = mongoose.model('postsindetail', postsInDetailSchema);
 
 module.exports = PostsInDetailModel;

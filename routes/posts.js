@@ -6,7 +6,7 @@ const { handleBookmarkPost, handleCreatePost, handleRetrievePost, handleUpdateLi
 
 router.post('/create', handleCreatePost);
 router.get('/retrieve', handleRetrievePost);
-router.patch('/like', handleUpdateLike);
+router.post('/like', handleUpdateLike);
 router.get('/bookmark/:id/:flag', handleBookmarkPost);
 
 module.exports = router;

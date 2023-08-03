@@ -8,6 +8,8 @@ const followingsSchema = new mongoose.Schema({
   timestamps: true,
 },);
 
+followingsSchema.index({ userId: 1 }, { unique: true });
+
 const FollowingsModel = mongoose.model('followings', followingsSchema);
 
 module.exports = FollowingsModel;

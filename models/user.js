@@ -21,6 +21,10 @@ const userSchema = new mongoose.Schema({
   timestamps: true,
 },);
 
+// Create unique indexes for 'email' and 'username' fields
+userSchema.index({ email: 1 }, { unique: true });
+userSchema.index({ username: 1 }, { unique: true });
+
 const UserModel = mongoose.model('users', userSchema);
 
 module.exports = UserModel;
