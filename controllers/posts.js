@@ -81,6 +81,7 @@ async function handleCreatePost(req, res){
 
 async function handleRetrievePost(req, res){
   const loggedInUserId = req.userId;
+
   try {
     // Step 1: Fetch the users that the logged-in user follows
     const followingUsers = await FollowingsModel.findOne({userId: loggedInUserId});
@@ -155,45 +156,36 @@ async function handleRetrievePost(req, res){
         },
       ]);
       
-      // // Step 3: Fetch random posts based on previous liked posts and interests
-      // const previousLikedPosts = loggedInUser.likedPosts; // Assuming you have a field 'likedPosts' in your user schema that stores the IDs of posts the user has liked
-      // const userInterests = loggedInUser.interests; // Assuming you have a field 'interests' in your user schema that stores the user's interests
-
-      // const randomPostsBasedOnLikedPosts = await Post.aggregate([
-      //   { $match: { _id: { $nin: previousLikedPosts } } }, // Exclude previously liked posts
-      //   { $sample: { size: 5 } }, // Sample 5 random posts
-      // ]);
-
-      // const randomPostsBasedOnInterests = await Post.aggregate([
-      //   { $match: { tags: { $in: userInterests } } }, // Match posts with tags that match user's interests
-      //   { $sample: { size: 5 } }, // Sample 5 random posts
-      // ]);
-
-      // Combine the results from different sources
       let postFeed = [
         ...recentPostsFromFollowing,
-        // ...randomPostsBasedOnLikedPosts,
-        // ...randomPostsBasedOnInterests,
       ];
 
       // Sort the post feed based on the latest posts
       postFeed.sort((a, b) => b.createdAt - a.createdAt);
 
-      // // Implement pagination
-      // const page = req.query.page || 1;
-      // const perPage = 10; // Number of posts to show per page
-      // const startIndex = (page - 1) * perPage;
-      // const endIndex = page * perPage;
-      // const totalPosts = postFeed.length;
+      // Implement pagination
+      const page = req.params.page || 1;
+      const perPage = 2; // Number of posts to show per page
+      const startIndex = (page - 1) * perPage;
+      const endIndex = page * perPage;
+      const totalPosts = postFeed.length;
 
-      // const paginatedPosts = postFeed.slice(startIndex, endIndex);
+      // Calculate total pages based on the number of posts and the perPage value
+      const totalPages = Math.ceil(totalPosts / perPage);
 
-      // res.json({
-      //   posts: paginatedPosts,
-      //   currentPage: page,
-      //   totalPages: Math.ceil(totalPosts / perPage),
-      // });
-      res.json({feeds: postFeed});
+      // Check if the requested page is greater than the total number of pages
+      if (page > totalPages) {
+        return res.status(404).json({ error: 'Requested page out of range' });
+      }
+
+      const paginatedPosts = postFeed.slice(startIndex, endIndex);
+
+      res.json({
+        posts: paginatedPosts,
+        currentPage: page,
+        totalPages: Math.ceil(totalPosts / perPage),
+      });
+      // res.json({feeds: postFeed});
     }
     else{
       res.json({error:"No followings"});
@@ -203,7 +195,6 @@ async function handleRetrievePost(req, res){
     res.status(500).json({ error: "Error retrieving posts" });
   }
 }
-
 
 // Function to handle liking/disliking a post with atomicity
 async function handleUpdateLike(req, res) {
