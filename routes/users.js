@@ -12,7 +12,11 @@ const {
   handleLoggedInUser,
   handleUserLogout,
   handleGetFollowersList,
-  handleGetBookmarkList
+  handleGetBookmarkList,
+  handleCountPosts,
+  handleCountFollowing,
+  handleCountFollowers,
+  handleCountBookmarks,
 } = require('../controllers/user');
 
 /* GET users listing. */
@@ -23,6 +27,10 @@ router.get('/', function (req, res, next) {
 
 router.get('/getloggedinuser', handleLoggedInUser);
 router.get('/follow/:username', handleFollowUser);
+router.get('/count/followers', handleCountFollowers);
+router.get('/count/following', handleCountFollowing);
+router.get('/count/posts', handleCountPosts);
+router.get('/count/bookmarks', handleCountBookmarks);
 router.get('/email/:useremail', handleGetUserIdByEmail)
 router.get('/isfollowing/:username', handleIsFollowing);
 router.get('/logout', handleUserLogout);

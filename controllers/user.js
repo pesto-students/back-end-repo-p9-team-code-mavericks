@@ -7,7 +7,75 @@ const PostsModel = require('../models/posts');
 const bcrypt = require('bcrypt');
 const { generateToken } = require('../service/jwt_authentication');
 
-async function handleInterests(req, res){
+async function handleCountFollowers(req, res) {
+  const loggedInUser = req.userId;
+  try {
+    const followersRec = await FollowersModel.findOne({ loggedInUser });
+    if (!followersRec) {
+      return res.status(404).json({ message: "User with such username to follow is not found." });
+    }
+
+    const followerCount = followersRec.followers.length;
+    console.log(`Number of followers for ${loggedInUser}: ${followerCount}`);
+    return res.status(200).json({ followers_count: followerCount });
+  } catch (error) {
+    console.error('Error counting followers:', error);
+    res.status(500).json({ error: 'An error occurred while counting followers.' });
+  }
+}
+
+async function handleCountFollowing(req, res) {
+  const loggedInUser = req.userId;
+  try {
+    const followingRec = await FollowingsModel.findOne({ loggedInUser });
+    if (!followingRec) {
+      return res.status(404).json({ message: "User with such username to follow is not found." });
+    }
+
+    const followingCount = followingRec.followings.length;
+    console.log(`Number of followings for ${loggedInUser}: ${followingCount}`);
+    return res.status(200).json({ following_count: followingCount });
+  } catch (error) {
+    console.error('Error counting following:', error);
+    res.status(500).json({ error: 'An error occurred while counting following.' });
+  }
+}
+
+async function handleCountPosts(req, res) {
+  const loggedInUser = req.userId;
+  try {
+    const PostsRec = await PostsModel.findOne({ author: loggedInUser });
+    if (!PostsRec) {
+      return res.status(404).json({ message: "User with such username to follow is not found." });
+    }
+
+    const PostsCount = PostsRec.length;
+    console.log(`Number of posts for ${loggedInUser}: ${PostsCount}`);
+    return res.status(200).json({ posts_count: PostsCount });
+  } catch (error) {
+    console.error('Error counting following:', error);
+    res.status(500).json({ error: 'An error occurred while counting posts.' });
+  }
+}
+
+async function handleCountBookmarks(req, res) {
+  const loggedInUser = req.userId;
+  try {
+    const bookmarkRec = await BookmarksModel.findOne({ userId: loggedInUser });
+    if (!bookmarkRec) {
+      return res.status(404).json({ message: "User with such username to follow is not found." });
+    }
+
+    const bookmarkCount = bookmarkRec.length;
+    console.log(`Number of bookmark for ${loggedInUser}: ${bookmarkCount}`);
+    return res.status(200).json({ bookmark_count: bookmarkCount });
+  } catch (error) {
+    console.error('Error counting bookmark:', error);
+    res.status(500).json({ error: 'An error occurred while counting bookmark.' });
+  }
+}
+
+async function handleInterests(req, res) {
   const loggedInUserId = req.userId;
   const { interests } = req.body;
   try {
@@ -20,49 +88,49 @@ async function handleInterests(req, res){
     return res.status(200).json({ message: 'User first_time_login set to false successfully', userRec });
   } catch (err) {
     console.error('Error updating user:', err);
-    res.status(500).json({ err: 'Server error: '+err });
+    res.status(500).json({ err: 'Server error: ' + err });
   }
 
 }
 
-async function handleGetBookmarkList(req, res){
+async function handleGetBookmarkList(req, res) {
   const loggedInUser = req.userId;
-  try{
+  try {
     const bookmarkPostsIds = await BookmarksModel.distinct('postId', { userId: loggedInUser });
-    const bookmarkedPosts = await PostsModel.find({ _id: { $in: bookmarkPostsIds }}, {_id:0, __v:0} );
-    res.json({bookmarks: bookmarkedPosts});
-  } catch(err){
-    res.status(500).json({error: err});
+    const bookmarkedPosts = await PostsModel.find({ _id: { $in: bookmarkPostsIds } }, { _id: 0, __v: 0 });
+    res.json({ bookmarks: bookmarkedPosts });
+  } catch (err) {
+    res.status(500).json({ error: err });
   }
 }
 
-async function handleUnfollowUser(req, res){
-  const loggedInUser = req.userId; 
+async function handleUnfollowUser(req, res) {
+  const loggedInUser = req.userId;
   const unfollowUserId = req.body.userId;
 
-  try{
+  try {
     const followingUpdate = await FollowingsModel.updateOne(
       { userId: loggedInUser },
       { $pull: { followings: unfollowUserId } }
     );
-  }catch(err){
-    res.json({error: "Something went wrong while updating followings table of logged in user: "+err});
+  } catch (err) {
+    res.json({ error: "Something went wrong while updating followings table of logged in user: " + err });
   }
-  
-  
-  try{
+
+
+  try {
     const followersUpdate = await FollowersModel.updateOne(
       { userId: unfollowUserId },
       { $pull: { followers: loggedInUser } }
     );
-  }catch(err){
-    res.json({error: "Something went wrong while updating followers table of logged in user: "+err});
+  } catch (err) {
+    res.json({ error: "Something went wrong while updating followers table of logged in user: " + err });
   }
 
-  res.status(200).json({message: "You unfollowed the user successfully."});
+  res.status(200).json({ message: "You unfollowed the user successfully." });
 }
 
-async function handleGetFollowersList(req, res){
+async function handleGetFollowersList(req, res) {
 
   // Get current logged in user Id.
   const loggedInUserId = req.userId;
@@ -74,47 +142,47 @@ async function handleGetFollowersList(req, res){
   let lookForUserId = loggedInUserId;
 
   // if logged in user is diff from user whose followers are requested. 
-  if(ofUser != req.userName){
-    try{
-      const ofUserRec = await UserModel.findOne({username: ofUser});
+  if (ofUser != req.userName) {
+    try {
+      const ofUserRec = await UserModel.findOne({ username: ofUser });
 
-      if(!ofUserRec){
-        return res.status(404).json({error: "User not found."});
+      if (!ofUserRec) {
+        return res.status(404).json({ error: "User not found." });
       }
 
       // Check if the profile of user passed in get request is public.
-      if(!ofUserRec.is_public){
-        return res.status(401).json({error: "User profile is not public"});
+      if (!ofUserRec.is_public) {
+        return res.status(401).json({ error: "User profile is not public" });
       }
 
       // Check if user that was passed in get request allows others to view their followers.
-      if(ofUserRec.followers_hidden){
-        return res.status(401).json({error: "User don't allow to view their followers."});
+      if (ofUserRec.followers_hidden) {
+        return res.status(401).json({ error: "User don't allow to view their followers." });
       }
-      
+
       // Set -> Looking for followers of user that was passed in get request.
       lookForUserId = ofUserRec._id;
-    } catch(err){
-      res.status(500).json({error: "Error:"+err});
+    } catch (err) {
+      res.status(500).json({ error: "Error:" + err });
     }
   }
 
   // Now get all the followers of user that was set in 'lookForUserId' variable.
-  try{
-    const allFollowersRec = await FollowersModel.findOne({userId: lookForUserId});
-    if(allFollowersRec){
+  try {
+    const allFollowersRec = await FollowersModel.findOne({ userId: lookForUserId });
+    if (allFollowersRec) {
       const allFollowersId = allFollowersRec.followers;
-      const allFollowers = await UserModel.find({ _id: { $in: allFollowersId }},{ _id: 0, username: 1, firstname: 1, lastname: 1 });
-      res.json({followers:allFollowers});
+      const allFollowers = await UserModel.find({ _id: { $in: allFollowersId } }, { _id: 0, username: 1, firstname: 1, lastname: 1 });
+      res.json({ followers: allFollowers });
     }
     else
-      res.json({followersError: "Didn't find any followers."});
-  } catch(err){
-    res.json({error: err});
-  }  
+      res.json({ followersError: "Didn't find any followers." });
+  } catch (err) {
+    res.json({ error: err });
+  }
 }
 
-async function handleGetFollowingsList(req, res){
+async function handleGetFollowingsList(req, res) {
   // Get current logged in user Id.
   const loggedInUserId = req.userId;
 
@@ -125,43 +193,43 @@ async function handleGetFollowingsList(req, res){
   let lookForUserId = loggedInUserId;
 
   // if logged in user is diff from user whose followings list is requested. 
-  if(ofUser != req.userName){
-    try{
-      const ofUserRec = await UserModel.findOne({username: ofUser});
+  if (ofUser != req.userName) {
+    try {
+      const ofUserRec = await UserModel.findOne({ username: ofUser });
 
-      if(!ofUserRec){
-        return res.status(404).json({error: "User not found."});
+      if (!ofUserRec) {
+        return res.status(404).json({ error: "User not found." });
       }
 
       // Check if the profile of user passed in get request is public.
-      if(!ofUserRec.is_public){
-        return res.status(401).json({error: "User profile is not public"});
+      if (!ofUserRec.is_public) {
+        return res.status(401).json({ error: "User profile is not public" });
       }
 
       // Check if user that was passed in get request allows others to view their followers.
-      if(ofUserRec.following_hidden){
-        return res.status(401).json({error: "User don't allow to view their followings."});
+      if (ofUserRec.following_hidden) {
+        return res.status(401).json({ error: "User don't allow to view their followings." });
       }
-      
+
       // Set -> Looking for followers of user that was passed in get request.
       lookForUserId = ofUserRec._id;
-    } catch(err){
-      res.status(500).json({error: "Error:"+err});
+    } catch (err) {
+      res.status(500).json({ error: "Error:" + err });
     }
   }
 
-  try{
-    const allFollowingsRec = await FollowingsModel.findOne({userId: lookForUserId});
-    if(allFollowingsRec){
+  try {
+    const allFollowingsRec = await FollowingsModel.findOne({ userId: lookForUserId });
+    if (allFollowingsRec) {
       const allFollowingIds = allFollowingsRec.followings;
-      const allFollowings = await UserModel.find({ _id: { $in: allFollowingIds }},{ _id: 0, username: 1, firstname: 1, lastname: 1 });
-      res.json({followings:allFollowings});
+      const allFollowings = await UserModel.find({ _id: { $in: allFollowingIds } }, { _id: 0, username: 1, firstname: 1, lastname: 1 });
+      res.json({ followings: allFollowings });
     }
     else
-      res.status(404).json({message: "Didn't find any such logged in user"});
-  } catch(err){
-    res.json({error: err});
-  }  
+      res.status(404).json({ message: "Didn't find any such logged in user" });
+  } catch (err) {
+    res.json({ error: err });
+  }
 }
 
 async function handleLoggedInUser(req, res) {
@@ -227,7 +295,7 @@ async function handleUserLogin(req, res) {
 
   const match = await bcrypt.compare(password, userQuery.password);
   if (!match) {
-    return res.status(401).json({error: 'Invalid email or password'});
+    return res.status(401).json({ error: 'Invalid email or password' });
   }
 
   const token = generateToken(userQuery);
@@ -241,7 +309,7 @@ async function handleUserLogin(req, res) {
 async function handleUserLogout(req, res) {
   // Clear the JWT token from the browser's cookies
   res.clearCookie('token');
-  
+
   // Send a response to indicate successful logout
   res.status(200).json({ message: 'Logged out successfully' });
 }
@@ -256,8 +324,8 @@ async function handleFollowUser(req, res) {
     }
     else {
       const followUserId = userRec._id;
-      if(followUserId == loggedInUserId){
-        return res.status(400).json({error: "You cannot follow yourself"});
+      if (followUserId == loggedInUserId) {
+        return res.status(400).json({ error: "You cannot follow yourself" });
       }
 
       // Update Followers list of followUserid
@@ -305,19 +373,19 @@ async function handleIsFollowing(req, res) {
     }
     else {
       const userIdToCheck = userRec._id;
-      if(userIdToCheck == loggedInUser){
-        return res.status(200).json({message:"You already follow yourself"});
+      if (userIdToCheck == loggedInUser) {
+        return res.status(200).json({ message: "You already follow yourself" });
       }
-      try{
-        const rec = await FollowingsModel.findOne({userId:loggedInUser, followings: { $in: [userIdToCheck] }});
-        if(!rec){
-          return res.status(404).json({message:"You are not following this user"});
+      try {
+        const rec = await FollowingsModel.findOne({ userId: loggedInUser, followings: { $in: [userIdToCheck] } });
+        if (!rec) {
+          return res.status(404).json({ message: "You are not following this user" });
         }
-        else{
-          return res.status(200).json({message:"You are already following this user"});
+        else {
+          return res.status(200).json({ message: "You are already following this user" });
         }
-      } catch(err){
-        return res.json({error:err});
+      } catch (err) {
+        return res.json({ error: err });
       }
     }
   } catch (error) {
@@ -348,20 +416,29 @@ async function handleGetUserIdByEmail(req, res) {
 async function handleGetUserDetailsByUsername(req, res) {
   const userName = req.params.username;
   try {
-    const userRec = await UserModel.findOne({ username: userName }, {_id: 0});
+    const userRec = await UserModel.findOne({ username: userName }, { _id: 0 });
     if (!userRec) {
       return res.status(404).json({ Error: "User with such username not found." });
     }
     else {
-      const respObj = {username: userRec.username, firstname: userRec.firstname, lastname: userRec.lastname };
-      if(!userRec.is_public)
-        return res.status(200).json({ user_details: respObj});
-      if(!userRec.email_hidden)
+      const respObj = { username: userRec.username, firstname: userRec.firstname, lastname: userRec.lastname };
+      if (!userRec.is_public)
+        return res.status(200).json({ user_details: respObj });
+      if (!userRec.email_hidden)
         respObj['email'] = userRec.email;
-      if(!userRec.contact_hidden)
+      if (!userRec.contact_hidden)
         respObj['contact'] = userRec.contact;
+      if (!userRec.followers_hidden)
+        respObj['followers_hidden'] = false;
+      else
+        respObj['followers_hidden'] = true;
 
-      return res.status(200).json({user_details: respObj});
+      if (!userRec.following_hidden)
+        respObj['following_hidden'] = false;
+      else
+        respObj['following_hidden'] = true;
+
+      return res.status(200).json({ user_details: respObj });
     }
   } catch (error) {
     console.log("Something went wrong while trying to find user by its username.");
@@ -383,4 +460,8 @@ module.exports = {
   handleGetBookmarkList,
   handleUnfollowUser,
   handleInterests,
+  handleCountBookmarks,
+  handleCountFollowers,
+  handleCountFollowing,
+  handleCountPosts,
 }

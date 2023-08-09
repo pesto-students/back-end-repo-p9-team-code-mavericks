@@ -6,6 +6,11 @@ const PostsInDetailModel = require('../models/posts_in_detail');
 const LikesModel = require('../models/like');
 const PostModel = require('../models/posts');
 
+async function handleFileUpload(req, res) {
+  const filePaths = req.files.map(file => file.path);
+  res.json({ filePaths });
+}
+
 async function handleBookmarkPost(req, res){
   const postId = req.params.id;
   const bookmarkFlag = req.params.flag;
@@ -37,7 +42,7 @@ async function handleBookmarkPost(req, res){
 
 async function handleCreatePost(req, res){
   try {
-    const { ispublic, recipe_steps, recipe_ingredients, recipe_category, recipe_description, recipe_title } = req.body;
+    const { ispublic, recipe_steps, recipe_ingredients, recipe_category, recipe_description, recipe_title, recipe_picture } = req.body;
     const author = req.userId;
 
     // Create a new Post object based on the PostsModel
@@ -47,6 +52,7 @@ async function handleCreatePost(req, res){
       recipe_description: recipe_description,
       ispublic: ispublic,
       recipe_likes: 0,
+      recipe_picture: recipe_picture,
     });
 
     // Save the new Post to the database
@@ -236,4 +242,5 @@ module.exports = {
   handleCreatePost,
   handleUpdateLike,
   handleBookmarkPost,
+  handleFileUpload,
 }
