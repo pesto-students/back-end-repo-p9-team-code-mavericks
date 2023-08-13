@@ -27,10 +27,10 @@ router.get('/', function (req, res, next) {
 
 router.get('/getloggedinuser', handleLoggedInUser);
 router.get('/follow/:username', handleFollowUser);
-router.get('/count/followers', handleCountFollowers);
-router.get('/count/following', handleCountFollowing);
-router.get('/count/posts', handleCountPosts);
-router.get('/count/bookmarks', handleCountBookmarks);
+router.get('/:username/count/followers', handleCountFollowers);
+router.get('/:username/count/following', handleCountFollowing);
+router.get('/:username/count/posts', handleCountPosts);
+router.get('/:username/count/bookmarks', handleCountBookmarks);
 router.get('/email/:useremail', handleGetUserIdByEmail)
 router.get('/isfollowing/:username', handleIsFollowing);
 router.get('/logout', handleUserLogout);

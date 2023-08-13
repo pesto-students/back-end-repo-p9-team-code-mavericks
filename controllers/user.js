@@ -8,32 +8,56 @@ const bcrypt = require('bcrypt');
 const { generateToken } = require('../service/jwt_authentication');
 
 async function handleCountFollowers(req, res) {
-  const loggedInUser = req.userId;
+  const user = req.params.username;
+  let userId;
+
+  try{
+    const userRec = await UserModel.findOne({username: user});
+    if(!userRec){
+      return res.status(404).json({error:'No such user exists'});
+    }
+    userId = userRec._id;
+  } catch(err) {
+    return res.status(500).json({error: 'Internal server error: '+err});
+  }
+
   try {
-    const followersRec = await FollowersModel.findOne({ loggedInUser });
+    const followersRec = await FollowersModel.findOne({ userId });
     if (!followersRec) {
-      return res.status(404).json({ message: "User with such username to follow is not found." });
+      return res.status(404).json({ followers_count: 0 });
     }
 
     const followerCount = followersRec.followers.length;
-    console.log(`Number of followers for ${loggedInUser}: ${followerCount}`);
+    console.log(`Number of followers for ${user}: ${followerCount}`);
     return res.status(200).json({ followers_count: followerCount });
-  } catch (error) {
-    console.error('Error counting followers:', error);
-    res.status(500).json({ error: 'An error occurred while counting followers.' });
+  } catch (err) {
+    console.error('Error counting followers:'+err);
+    res.status(500).json({ error: 'An error occurred while counting followers: '+err });
   }
 }
 
 async function handleCountFollowing(req, res) {
-  const loggedInUser = req.userId;
+  const user = req.params.username;
+  let userId;
+
+  try{
+    const userRec = await UserModel.findOne({username: user});
+    if(!userRec){
+      return res.status(404).json({error:'No such user exists'});
+    }
+    userId = userRec._id;
+  } catch(err) {
+    return res.status(500).json({error: 'Internal server error: '+err});
+  }
+
   try {
-    const followingRec = await FollowingsModel.findOne({ loggedInUser });
+    const followingRec = await FollowingsModel.findOne({ userId });
     if (!followingRec) {
-      return res.status(404).json({ message: "User with such username to follow is not found." });
+      return res.status(404).json({ following_count: 0 });
     }
 
     const followingCount = followingRec.followings.length;
-    console.log(`Number of followings for ${loggedInUser}: ${followingCount}`);
+    console.log(`Number of followings for ${user}: ${followingCount}`);
     return res.status(200).json({ following_count: followingCount });
   } catch (error) {
     console.error('Error counting following:', error);
@@ -42,15 +66,28 @@ async function handleCountFollowing(req, res) {
 }
 
 async function handleCountPosts(req, res) {
-  const loggedInUser = req.userId;
+  const user = req.params.username;
+  let userId;
+
+  try{
+    const userRec = await UserModel.findOne({username: user});
+    if(!userRec){
+      return res.status(404).json({error:'No such user exists'});
+    }
+    userId = userRec._id;
+  } catch(err) {
+    return res.status(500).json({error: 'Internal server error: '+err});
+  }
+
   try {
-    const PostsRec = await PostsModel.findOne({ author: loggedInUser });
+    const PostsRec = await PostsModel.find({ author: userId });
+
     if (!PostsRec) {
-      return res.status(404).json({ message: "User with such username to follow is not found." });
+      return res.status(404).json({ posts_count: 0});
     }
 
     const PostsCount = PostsRec.length;
-    console.log(`Number of posts for ${loggedInUser}: ${PostsCount}`);
+    console.log(`Number of posts for ${user}: ${PostsCount}`);
     return res.status(200).json({ posts_count: PostsCount });
   } catch (error) {
     console.error('Error counting following:', error);
@@ -59,16 +96,28 @@ async function handleCountPosts(req, res) {
 }
 
 async function handleCountBookmarks(req, res) {
-  const loggedInUser = req.userId;
+  const user = req.params.username;
+  let userId;
+
+  try{
+    const userRec = await UserModel.findOne({username: user});
+    if(!userRec){
+      return res.status(404).json({error:'No such user exists'});
+    }
+    userId = userRec._id;
+  } catch(err) {
+    return res.status(500).json({error: 'Internal server error: '+err});
+  }
+
   try {
-    const bookmarkRec = await BookmarksModel.findOne({ userId: loggedInUser });
+    const bookmarkRec = await BookmarksModel.find({ userId: userId });
     if (!bookmarkRec) {
-      return res.status(404).json({ message: "User with such username to follow is not found." });
+      return res.status(404).json({ bookmarks_count: 0 });
     }
 
     const bookmarkCount = bookmarkRec.length;
-    console.log(`Number of bookmark for ${loggedInUser}: ${bookmarkCount}`);
-    return res.status(200).json({ bookmark_count: bookmarkCount });
+    console.log(`Number of bookmark for ${user}: ${bookmarkCount}`);
+    return res.status(200).json({ bookmarks_count: bookmarkCount });
   } catch (error) {
     console.error('Error counting bookmark:', error);
     res.status(500).json({ error: 'An error occurred while counting bookmark.' });
