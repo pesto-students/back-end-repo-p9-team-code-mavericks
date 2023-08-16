@@ -316,8 +316,42 @@ async function handleGetPostDetailsByPostId(req, res) {
   }
 }
 
+async function handleGetIfPostLikedAndBookmarkedByUser(req, res) {
+  try {
+    const postId = req.params.postid;
+    const user = req.params.username;
+    let userId;
+
+    try{
+      const userRec = await UserModel.findOne({username: user});
+      if(!userRec){
+        return res.status(404).json({error:'No such user exists'});
+      }
+      userId = userRec._id;
+    } catch(err) {
+      return res.status(500).json({error: 'Internal server error: '+err});
+    }
+
+    const likesRec = await LikesModel.find({userId:userId, postId: postId });
+    const bookmarksRec = await BookmarksModel.find({userId:userId, postId: postId });
+
+    let isliked = false;
+    let isBookmarked = false;
+
+    if(likesRec && likesRec.length !== 0)
+      isliked = true;
+    if(bookmarksRec && bookmarksRec.length != 0)
+      isBookmarked = true
+
+    return res.status(200).json({is_liked:isliked, is_bookmarked: isBookmarked});
+  } catch (err) {
+    res.status(500).json({error:'Internal server error '+err});
+  }
+}
+
 
 module.exports = {
+  handleGetIfPostLikedAndBookmarkedByUser,
   handleGetPostDetailsByPostId,
   handleRetrievePost,
   handleCreatePost,
