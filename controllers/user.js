@@ -24,7 +24,7 @@ async function handleCountFollowers(req, res) {
   try {
     const followersRec = await FollowersModel.findOne({ userId });
     if (!followersRec) {
-      return res.status(404).json({ followers_count: 0 });
+      return res.status(200).json({ followers_count: 0 });
     }
 
     const followerCount = followersRec.followers.length;
@@ -53,7 +53,7 @@ async function handleCountFollowing(req, res) {
   try {
     const followingRec = await FollowingsModel.findOne({ userId });
     if (!followingRec) {
-      return res.status(404).json({ following_count: 0 });
+      return res.status(200).json({ following_count: 0 });
     }
 
     const followingCount = followingRec.followings.length;
@@ -83,7 +83,7 @@ async function handleCountPosts(req, res) {
     const PostsRec = await PostsModel.find({ author: userId });
 
     if (!PostsRec) {
-      return res.status(404).json({ posts_count: 0});
+      return res.status(200).json({ posts_count: 0});
     }
 
     const PostsCount = PostsRec.length;
@@ -112,7 +112,7 @@ async function handleCountBookmarks(req, res) {
   try {
     const bookmarkRec = await BookmarksModel.find({ userId: userId });
     if (!bookmarkRec) {
-      return res.status(404).json({ bookmarks_count: 0 });
+      return res.status(200).json({ bookmarks_count: 0 });
     }
 
     const bookmarkCount = bookmarkRec.length;
@@ -418,7 +418,7 @@ async function handleIsFollowing(req, res) {
     const userRec = await UserModel.findOne({ username: userNameToCheck });
 
     if (!userRec) {
-      return res.status(404).json({ message: "User with such username to follow is not found." });
+      return res.status(404).json({ error: "User with such username to follow is not found." });
     }
     else {
       const userIdToCheck = userRec._id;
@@ -428,10 +428,10 @@ async function handleIsFollowing(req, res) {
       try {
         const rec = await FollowingsModel.findOne({ userId: loggedInUser, followings: { $in: [userIdToCheck] } });
         if (!rec) {
-          return res.status(404).json({ message: "You are not following this user" });
+          return res.status(200).json({ is_following: false });
         }
         else {
-          return res.status(200).json({ message: "You are already following this user" });
+          return res.status(200).json({ is_following: true });
         }
       } catch (err) {
         return res.json({ error: err });
@@ -439,7 +439,7 @@ async function handleIsFollowing(req, res) {
     }
   } catch (error) {
     console.log("Something went wrong while trying to find user by its username to follow.");
-    return res.json({ message: "500: Internal server error." });
+    return res.json({ error: "500: Internal server error."+error});
   }
 
 }

@@ -5,10 +5,68 @@ const BookmarksModel = require('../models/bookmark');
 const PostsInDetailModel = require('../models/posts_in_detail');
 const LikesModel = require('../models/like');
 const PostModel = require('../models/posts');
+const UserModel = require('../models/user');
 
 async function handleFileUpload(req, res) {
   const filePaths = req.files.map(file => file.path);
   res.json({ filePaths });
+}
+
+async function handleSearch(req, res) {
+  try{
+    const keyword = req.params.keyword;
+    const postMatches = await PostModel.find({ recipe_title: { $regex: `^${keyword}`, $options: 'i' } }).select('author_username recipe_title').limit(10).lean();
+
+    const userMatches = await UserModel.find({
+      $or: [
+        { username: { $regex: `^${keyword}`, $options: 'i' } }, // Case-insensitive search
+        { firstname: { $regex: `^${keyword}`, $options: 'i' } },
+        { lastname: { $regex: `^${keyword}`, $options: 'i' } }
+      ],
+    }).select('username firstname lastname -_id').limit(10).lean();
+
+    res.status(200).json({posts:postMatches, users:userMatches});
+  } catch(err) {
+    res.status(500).json({error: "Internal server error: "+err});
+  }
+}
+async function handleMostLiked(req, res){
+  try{
+    const topPosts = await PostsModel.find()
+      .sort({ recipe_likes: -1 }) // Sort in descending order based on recipe_likes
+      .limit(4); // Limit the results to 5 posts
+      res.status(200).json({most_liked_posts:topPosts});
+  } catch(err) {
+    res.status(500).json({error: 'Internal Server error: '+err});
+  }
+}
+
+async function handleGetAllPostsByUsername(req, res) {
+  const user = req.params.username;
+  let userId;
+
+  try{
+    const userRec = await UserModel.findOne({username: user});
+    if(!userRec){
+      return res.status(404).json({error:'No such user exists'});
+    }
+    userId = userRec._id;
+  } catch(err) {
+    return res.status(500).json({error: 'Internal server error: '+err});
+  }
+
+  try {
+    const postRec = await PostModel.find({ author: userId });
+    if (!postRec) {
+      return res.status(200).json({ followers_count: 0 });
+    }
+
+    return res.status(200).json({ posts: postRec });
+  } catch (err) {
+    console.error('Error retrieving user posts:'+err);
+    res.status(500).json({ error: 'An error occurred while fetching posts of the user: '+err });
+  }
+
 }
 
 async function handleBookmarkPost(req, res){
@@ -43,11 +101,13 @@ async function handleBookmarkPost(req, res){
 async function handleCreatePost(req, res){
   try {
     const { ispublic, recipe_steps, recipe_ingredients, recipe_category, recipe_description, recipe_title, recipe_picture } = req.body;
-    const author = req.userId;
+    const authorId = req.userId;
+    const authorUsername = req.userName;
 
     // Create a new Post object based on the PostsModel
     const newPost = new PostsModel({
-      author: author,
+      author: authorId,
+      author_username: authorUsername,
       recipe_title: recipe_title,
       recipe_description: recipe_description,
       ispublic: ispublic,
@@ -127,7 +187,7 @@ async function handleRetrievePost(req, res){
                   $expr: {
                     $and: [
                       { $eq: ['$postId', '$$postId'] },
-                      { $eq: ['$userId', new mongoose.Types.ObjectId(loggedInUserId)] } // Check if the post is bookmarked by the logged-in user
+                      { $eq: ['$userId', new mongoose.Types.ObjectId(loggedInUserId)] } // Check if the post is liked by the logged-in user
                     ]
                   }
                 }
@@ -243,4 +303,7 @@ module.exports = {
   handleUpdateLike,
   handleBookmarkPost,
   handleFileUpload,
+  handleGetAllPostsByUsername,
+  handleMostLiked,
+  handleSearch
 }
