@@ -30,6 +30,7 @@ async function handleSearch(req, res) {
     res.status(500).json({error: "Internal server error: "+err});
   }
 }
+
 async function handleMostLiked(req, res){
   try{
     const topPosts = await PostsModel.find()
@@ -97,10 +98,9 @@ async function handleBookmarkPost(req, res){
   }
 }
 
-
 async function handleCreatePost(req, res){
   try {
-    const { ispublic, recipe_steps, recipe_ingredients, recipe_category, recipe_description, recipe_title, recipe_picture } = req.body;
+    const { recipe_time, ispublic, recipe_steps, recipe_ingredients, recipe_category, recipe_description, recipe_title, recipe_picture } = req.body;
     const authorId = req.userId;
     const authorUsername = req.userName;
 
@@ -125,6 +125,7 @@ async function handleCreatePost(req, res){
         recipe_category: recipe_category, 
         recipe_ingredients: recipe_ingredients, 
         recipe_steps: recipe_steps, 
+        recipe_time: recipe_time,
       });
 
       const createPostsInDetailRec = await newPostsInDetail.save();
@@ -143,7 +144,6 @@ async function handleCreatePost(req, res){
     return res.status(500).json({ error: err.message });
   }
 }
-
 
 async function handleRetrievePost(req, res){
   const loggedInUserId = req.userId;
@@ -297,7 +297,28 @@ async function handleUpdateLike(req, res) {
   }
 }
 
+
+async function handleGetPostDetailsByPostId(req, res) {
+  try{
+    const postId = req.params.id;
+    const postRec = await PostModel.findById(postId);
+    const postInDetail = await PostsInDetailModel.findOne({post_id:postId}, {_id:0, createdAt:0, updatedAt:0, __v:0});
+
+    if(!postRec)
+      return res.status(404).json({error:'No such post was found'});
+    
+    if(!postInDetail)
+      return res.status(404).json({error:'No such post details was found'});
+
+    return res.json({post: postRec ,post_in_detail:postInDetail});
+  } catch(err) {
+    res.status(500).json({error: "Internal server error: "+err});
+  }
+}
+
+
 module.exports = {
+  handleGetPostDetailsByPostId,
   handleRetrievePost,
   handleCreatePost,
   handleUpdateLike,

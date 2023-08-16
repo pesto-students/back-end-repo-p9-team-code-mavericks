@@ -6,6 +6,7 @@ const postsInDetailSchema = new mongoose.Schema({
   recipe_category: { type: String, required: true },
   recipe_ingredients: { type: [String], required: true },
   recipe_steps: { type: [String], required: true },
+  recipe_time: {type:String},
 }, {
   timestamps: true,
 },);
