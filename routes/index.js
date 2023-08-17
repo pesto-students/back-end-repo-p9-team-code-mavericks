@@ -5,7 +5,7 @@ const { handleUserSignUp, handleUserLogin } = require('../controllers/user');
 /* GET home page. */
 router.get('/', function (req, res, next) {
   // res.render('index',{title:'Rasoi API Documentation'});
-  res.json({ "data": "This is data" });
+  res.json({ "status": "Up and running"});
 });
 
 router.post('/signup', handleUserSignUp);
