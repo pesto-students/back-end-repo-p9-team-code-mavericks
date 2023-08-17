@@ -13,7 +13,7 @@ async function handleFileUpload(req, res) {
 }
 
 async function handleSearch(req, res) {
-  try{
+  try {
     const keyword = req.params.keyword;
     const postMatches = await PostModel.find({ recipe_title: { $regex: `^${keyword}`, $options: 'i' } }).select('author_username recipe_title').limit(10).lean();
 
@@ -25,20 +25,20 @@ async function handleSearch(req, res) {
       ],
     }).select('username firstname lastname -_id').limit(10).lean();
 
-    res.status(200).json({posts:postMatches, users:userMatches});
-  } catch(err) {
-    res.status(500).json({error: "Internal server error: "+err});
+    res.status(200).json({ posts: postMatches, users: userMatches });
+  } catch (err) {
+    res.status(500).json({ error: "Internal server error: " + err });
   }
 }
 
-async function handleMostLiked(req, res){
-  try{
+async function handleMostLiked(req, res) {
+  try {
     const topPosts = await PostsModel.find()
       .sort({ recipe_likes: -1 }) // Sort in descending order based on recipe_likes
       .limit(4); // Limit the results to 5 posts
-      res.status(200).json({most_liked_posts:topPosts});
-  } catch(err) {
-    res.status(500).json({error: 'Internal Server error: '+err});
+    res.status(200).json({ most_liked_posts: topPosts });
+  } catch (err) {
+    res.status(500).json({ error: 'Internal Server error: ' + err });
   }
 }
 
@@ -46,14 +46,14 @@ async function handleGetAllPostsByUsername(req, res) {
   const user = req.params.username;
   let userId;
 
-  try{
-    const userRec = await UserModel.findOne({username: user});
-    if(!userRec){
-      return res.status(404).json({error:'No such user exists'});
+  try {
+    const userRec = await UserModel.findOne({ username: user });
+    if (!userRec) {
+      return res.status(404).json({ error: 'No such user exists' });
     }
     userId = userRec._id;
-  } catch(err) {
-    return res.status(500).json({error: 'Internal server error: '+err});
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error: ' + err });
   }
 
   try {
@@ -64,18 +64,18 @@ async function handleGetAllPostsByUsername(req, res) {
 
     return res.status(200).json({ posts: postRec });
   } catch (err) {
-    console.error('Error retrieving user posts:'+err);
-    res.status(500).json({ error: 'An error occurred while fetching posts of the user: '+err });
+    console.error('Error retrieving user posts:' + err);
+    res.status(500).json({ error: 'An error occurred while fetching posts of the user: ' + err });
   }
 
 }
 
-async function handleBookmarkPost(req, res){
+async function handleBookmarkPost(req, res) {
   const postId = req.params.id;
   const bookmarkFlag = req.params.flag;
   const loggedInUser = req.userId;
 
-  if(bookmarkFlag == '1'){
+  if (bookmarkFlag == '1') {
     const newRec = new BookmarksModel({
       userId: loggedInUser,
       postId: postId,
@@ -88,17 +88,17 @@ async function handleBookmarkPost(req, res){
     } else {
       return res.status(500).json({ error: 'Failed to bookmark the post.' });
     }
-  }else if(bookmarkFlag == '0'){
+  } else if (bookmarkFlag == '0') {
     try {
       const result = await BookmarksModel.deleteOne({ userId: loggedInUser, postId: postId });
-      res.status(200).json({message: 'Post un-bookmarked successfully:'});
+      res.status(200).json({ message: 'Post un-bookmarked successfully:' });
     } catch (error) {
-      res.status(404).json({error:'Post un-bookmark failed with error: '+ error});
+      res.status(404).json({ error: 'Post un-bookmark failed with error: ' + error });
     }
   }
 }
 
-async function handleCreatePost(req, res){
+async function handleCreatePost(req, res) {
   try {
     const { recipe_time, ispublic, recipe_steps, recipe_ingredients, recipe_category, recipe_description, recipe_title, recipe_picture } = req.body;
     const authorId = req.userId;
@@ -122,18 +122,18 @@ async function handleCreatePost(req, res){
     if (createdPost) {
       const newPostsInDetail = new PostsInDetailModel({
         post_id: createdPost._id,
-        recipe_category: recipe_category, 
-        recipe_ingredients: recipe_ingredients, 
-        recipe_steps: recipe_steps, 
+        recipe_category: recipe_category,
+        recipe_ingredients: recipe_ingredients,
+        recipe_steps: recipe_steps,
         recipe_time: recipe_time,
       });
 
       const createPostsInDetailRec = await newPostsInDetail.save();
 
-      if(createPostsInDetailRec)
+      if (createPostsInDetailRec)
         return res.status(200).json({ message: 'Post created successfully' });
       else
-        return res.status(500).json({error: 'Failed to create record in in-detail posts section.'});
+        return res.status(500).json({ error: 'Failed to create record in in-detail posts section.' });
     } else {
       return res.status(500).json({ error: 'Failed to create Post' });
     }
@@ -145,14 +145,14 @@ async function handleCreatePost(req, res){
   }
 }
 
-async function handleRetrievePost(req, res){
+async function handleRetrievePost(req, res) {
   const loggedInUserId = req.userId;
 
   try {
     // Step 1: Fetch the users that the logged-in user follows
-    const followingUsers = await FollowingsModel.findOne({userId: loggedInUserId});
+    const followingUsers = await FollowingsModel.findOne({ userId: loggedInUserId });
 
-    if(followingUsers){
+    if (followingUsers) {
       // Step 2: Fetch recent posts from users that the logged-in user follows
       const recentPostsFromFollowing = await PostsModel.aggregate([
         {
@@ -180,7 +180,7 @@ async function handleRetrievePost(req, res){
         {
           $lookup: {
             from: 'likes',
-            let: { postId: '$_id'},
+            let: { postId: '$_id' },
             pipeline: [
               {
                 $match: {
@@ -207,7 +207,7 @@ async function handleRetrievePost(req, res){
             },
             liked: {
               $cond: {
-                if: {$gt: [{$size: '$likesData'}, 0]},
+                if: { $gt: [{ $size: '$likesData' }, 0] },
                 then: true,
                 else: false
               }
@@ -221,7 +221,7 @@ async function handleRetrievePost(req, res){
           }
         },
       ]);
-      
+
       let postFeed = [
         ...recentPostsFromFollowing,
       ];
@@ -253,8 +253,8 @@ async function handleRetrievePost(req, res){
       });
       // res.json({feeds: postFeed});
     }
-    else{
-      res.json({error:"No followings"});
+    else {
+      res.json({ error: "No followings" });
     }
   } catch (err) {
     console.error("Error retrieving posts:", err);
@@ -265,7 +265,7 @@ async function handleRetrievePost(req, res){
 // Function to handle liking/disliking a post with atomicity
 async function handleUpdateLike(req, res) {
   const loggedInUserId = req.userId;
-  const {postId, likeFlag} = req.body;
+  const { postId, likeFlag } = req.body;
 
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -288,31 +288,31 @@ async function handleUpdateLike(req, res) {
     // Commit the transaction
     await session.commitTransaction();
     session.endSession();
-    return res.status(200).json({message: "Updated the likes data", total_likes: updatedPost.recipe_likes});
+    return res.status(200).json({ message: "Updated the likes data", total_likes: updatedPost.recipe_likes });
   } catch (err) {
     // If any error occurs, abort the transaction and handle the error
     await session.abortTransaction();
     session.endSession();
-    return res.status(500).json({error: "Error occured while updating likes "+err});
+    return res.status(500).json({ error: "Error occured while updating likes " + err });
   }
 }
 
 
 async function handleGetPostDetailsByPostId(req, res) {
-  try{
+  try {
     const postId = req.params.id;
     const postRec = await PostModel.findById(postId);
-    const postInDetail = await PostsInDetailModel.findOne({post_id:postId}, {_id:0, createdAt:0, updatedAt:0, __v:0});
+    const postInDetail = await PostsInDetailModel.findOne({ post_id: postId }, { _id: 0, createdAt: 0, updatedAt: 0, __v: 0 });
 
-    if(!postRec)
-      return res.status(404).json({error:'No such post was found'});
-    
-    if(!postInDetail)
-      return res.status(404).json({error:'No such post details was found'});
+    if (!postRec)
+      return res.status(404).json({ error: 'No such post was found' });
 
-    return res.json({post: postRec ,post_in_detail:postInDetail});
-  } catch(err) {
-    res.status(500).json({error: "Internal server error: "+err});
+    if (!postInDetail)
+      return res.status(404).json({ error: 'No such post details was found' });
+
+    return res.json({ post: postRec, post_in_detail: postInDetail });
+  } catch (err) {
+    res.status(500).json({ error: "Internal server error: " + err });
   }
 }
 
@@ -322,35 +322,72 @@ async function handleGetIfPostLikedAndBookmarkedByUser(req, res) {
     const user = req.params.username;
     let userId;
 
-    try{
-      const userRec = await UserModel.findOne({username: user});
-      if(!userRec){
-        return res.status(404).json({error:'No such user exists'});
+    try {
+      const userRec = await UserModel.findOne({ username: user });
+      if (!userRec) {
+        return res.status(404).json({ error: 'No such user exists' });
       }
       userId = userRec._id;
-    } catch(err) {
-      return res.status(500).json({error: 'Internal server error: '+err});
+    } catch (err) {
+      return res.status(500).json({ error: 'Internal server error: ' + err });
     }
 
-    const likesRec = await LikesModel.find({userId:userId, postId: postId });
-    const bookmarksRec = await BookmarksModel.find({userId:userId, postId: postId });
+    const likesRec = await LikesModel.find({ userId: userId, postId: postId });
+    const bookmarksRec = await BookmarksModel.find({ userId: userId, postId: postId });
 
     let isliked = false;
     let isBookmarked = false;
 
-    if(likesRec && likesRec.length !== 0)
+    if (likesRec && likesRec.length !== 0)
       isliked = true;
-    if(bookmarksRec && bookmarksRec.length != 0)
+    if (bookmarksRec && bookmarksRec.length != 0)
       isBookmarked = true
 
-    return res.status(200).json({is_liked:isliked, is_bookmarked: isBookmarked});
+    return res.status(200).json({ is_liked: isliked, is_bookmarked: isBookmarked });
   } catch (err) {
-    res.status(500).json({error:'Internal server error '+err});
+    res.status(500).json({ error: 'Internal server error ' + err });
+  }
+}
+
+async function handleGetCalorieForIngridients(req, res) {
+
+}
+
+async function handleGetBookmarksWithInfo(req, res) {
+  try {
+    const userId = req.userId;
+
+    // Step 1: Get Bookmarked Posts
+    const bookmarkedPosts = await BookmarksModel.find({ userId: userId });
+    const bookmarkedPostIds = bookmarkedPosts.map(post => post.postId);
+
+    // Step 2: Get liked posts by the user
+    const likedPosts = await LikesModel.find({ userId: userId });
+    const likedPostIds = likedPosts.map(post => post.postId.toString());
+
+    // Step 3: Get all the post info that are bookmarked by the user
+    const postsWithInfo = await PostModel.find({ _id: { $in: bookmarkedPostIds } });
+
+    // Step 4: For each post, determine if it's liked by the user and add the isLiked field
+    const postsWithIsLiked = postsWithInfo.map(post => ({
+      ...post.toObject(),
+      liked: likedPostIds.includes(post._id.toString()),
+      bookmarked: true,
+    }));
+
+    // Step 5: Return the response
+    return res.status(200).json(postsWithIsLiked);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 }
 
 
+
 module.exports = {
+  handleGetBookmarksWithInfo,
+  handleGetCalorieForIngridients,
   handleGetIfPostLikedAndBookmarkedByUser,
   handleGetPostDetailsByPostId,
   handleRetrievePost,

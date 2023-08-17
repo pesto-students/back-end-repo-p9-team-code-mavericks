@@ -155,7 +155,18 @@ async function handleGetBookmarkList(req, res) {
 
 async function handleUnfollowUser(req, res) {
   const loggedInUser = req.userId;
-  const unfollowUserId = req.body.userId;
+  const user = req.params.username;
+  let unfollowUserId;
+
+  try{
+    const userRec = await UserModel.findOne({username: user});
+    if(!userRec){
+      return res.status(404).json({error:'No such user exists'});
+    }
+    unfollowUserId = userRec._id;
+  } catch(err) {
+    return res.status(500).json({error: 'Internal server error: '+err});
+  }
 
   try {
     const followingUpdate = await FollowingsModel.updateOne(
@@ -369,7 +380,7 @@ async function handleFollowUser(req, res) {
   try {
     const userRec = await UserModel.findOne({ username: followUsername });
     if (!userRec) {
-      return res.status(404).json({ message: "User with such username to follow is not found." });
+      return res.status(404).json({ error: "User with such username to follow is not found." });
     }
     else {
       const followUserId = userRec._id;
@@ -407,7 +418,7 @@ async function handleFollowUser(req, res) {
     return res.json({ message: "500: Internal server error." });
   }
 
-  return res.status(200).json({ message: "You have followed the user succesfully!" });
+  return res.status(200).json({ message: "You have followed the user succesfully!", status:true});
 }
 
 async function handleIsFollowing(req, res) {
@@ -494,6 +505,7 @@ async function handleGetUserDetailsByUsername(req, res) {
     return res.json({ message: "500: Internal server error." });
   }
 }
+
 
 module.exports = {
   handleIsFollowing,

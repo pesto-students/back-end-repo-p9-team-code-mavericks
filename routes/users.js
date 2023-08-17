@@ -38,7 +38,7 @@ router.get('/username/:username', handleGetUserDetailsByUsername);
 router.get('/followers/:ofuser', handleGetFollowersList);
 router.get('/followings/:ofuser', handleGetFollowingsList);
 router.get('/bookmarklist', handleGetBookmarkList);
-router.post('/unfollow', handleUnfollowUser);
+router.get('/unfollow/:username', handleUnfollowUser);
 router.patch('/intrests/', handleInterests);
 
 
