@@ -4,7 +4,7 @@ const { handleUserSignUp, handleUserLogin } = require('../controllers/user');
 
 /* GET home page. */
 router.get('/', function (req, res, next) {
-  res.json({ "status": "Server Up and running for ci/cd testing."});
+  res.json({ "status": "Up and running for ci/cd testing."});
 });
 
 router.post('/signup', handleUserSignUp);
