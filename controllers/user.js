@@ -3,6 +3,7 @@ const FollowersModel = require('../models/followers');
 const FollowingsModel = require('../models/followings');
 const BookmarksModel = require('../models/bookmark');
 const PostsModel = require('../models/posts');
+const mongoose = require('mongoose');
 
 const bcrypt = require('bcrypt');
 const { generateToken } = require('../service/jwt_authentication');
@@ -191,7 +192,6 @@ async function handleUnfollowUser(req, res) {
 }
 
 async function handleGetFollowersList(req, res) {
-
   // Get current logged in user Id.
   const loggedInUserId = req.userId;
 
@@ -232,7 +232,19 @@ async function handleGetFollowersList(req, res) {
     const allFollowersRec = await FollowersModel.findOne({ userId: lookForUserId });
     if (allFollowersRec) {
       const allFollowersId = allFollowersRec.followers;
-      const allFollowers = await UserModel.find({ _id: { $in: allFollowersId } }, { _id: 0, username: 1, firstname: 1, lastname: 1 });
+      let allFollowers = await UserModel.find({ _id: { $in: allFollowersId } }, { _id: 1, username: 1, firstname: 1, lastname: 1});
+
+      if (ofUser) {
+        const followingRec = await FollowingsModel.findOne({ userId: new mongoose.Types.ObjectId(loggedInUserId)});
+        if (followingRec) {
+          const followingList = followingRec.followings.map(id => id.toString());
+          let allFollowersModifiedResp;
+          allFollowers = allFollowers.map(follower => {
+            const followBack = followingList.includes(follower._id.toString());
+            return { firstname: follower.firstname, lastname: follower.lastname, username: follower.username, followback: followBack}; // 'toObject()' converts the Mongoose document to a plain JavaScript object
+          });
+        }
+      }
       res.json({ followers: allFollowers });
     }
     else
