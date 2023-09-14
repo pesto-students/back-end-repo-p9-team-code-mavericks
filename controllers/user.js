@@ -548,6 +548,19 @@ async function handleGetUserDetailsByUsername(req, res) {
   }
 }
 
+async function handleVerifyUsernameExists(req, res) {
+  const username = req.params.username;
+  try {
+    const userRec = await UserModel.findOne({ username: userName }, { _id: 0 });
+    if (!userRec) {
+      return res.status(200).json({ can_add_username: true});
+    }
+    else
+      return res.status(200).json({can_add_username: false});
+  } catch(err){
+    return res.status(500).json("Internal server error: "+err);
+  }
+}
 
 module.exports = {
   handleIsFollowing,
@@ -567,4 +580,5 @@ module.exports = {
   handleCountFollowers,
   handleCountFollowing,
   handleCountPosts,
+  handleVerifyUsernameExists,
 }
