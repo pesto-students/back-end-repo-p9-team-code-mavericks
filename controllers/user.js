@@ -326,7 +326,7 @@ async function handleLoggedInUser(req, res) {
 }
 
 async function handleUserSignUp(req, res) {
-  try {
+  /*try {
     const { firstname, lastname, contact, email, password, username } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
     // Create a new user object based on the UserModel
@@ -336,6 +336,36 @@ async function handleUserSignUp(req, res) {
       firstname: firstname,
       lastname: lastname,
       contact: contact,
+      username: username,
+    });
+
+    // Save the new user to the database
+    const createdUser = await newUser.save();
+
+    // Check if the user was created successfully
+    if (createdUser) {
+      // Return a JSON response indicating success
+      return res.status(200).json({ message: 'User created successfully' });
+    } else {
+      // Return a JSON response indicating failure
+      return res.status(500).json({ error: 'Failed to create user' });
+    }
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ error: err.message });
+    }
+    return res.status(500).json({ error: err.message });
+  }*/
+  try {
+    const { password, username } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    // Create a new user object based on the UserModel
+    const newUser = new UserModel({
+      // email: email,
+      password: hashedPassword,
+      // firstname: firstname,
+      // lastname: lastname,
+      // contact: contact,
       username: username,
     });
 
