@@ -9,6 +9,7 @@ const postSchema = new mongoose.Schema({
   recipe_picture: { type: [String] },
   recipe_likes: { type: Number, required: false },
   ispublic: {type: Boolean, require: true},
+  num_of_clicks: {type: Number, default: 0},
 }, {
   timestamps: true,
 },);

@@ -5,8 +5,8 @@ const userSchema = new mongoose.Schema({
   username: {type: String, required: true, unique: true},
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  firstname: { type: String, required: true },
-  lastname: { type: String, required: true },
+  firstname: { type: String, required: false },
+  lastname: { type: String, required: false },
   contact: { type: String },
   interests: { type: [String] },
   last_active: { type: Date },
@@ -17,6 +17,7 @@ const userSchema = new mongoose.Schema({
   followers_hidden: {type: Boolean, default: false},
   following_hidden: {type: Boolean, default: false},
   first_time_login: {type: Boolean, default: true},
+  signup_completed: {type: Boolean, default: false},
 }, {
   timestamps: true,
 },);

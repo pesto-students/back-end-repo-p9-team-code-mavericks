@@ -6,11 +6,55 @@ const PostsInDetailModel = require('../models/posts_in_detail');
 const LikesModel = require('../models/like');
 const PostModel = require('../models/posts');
 const UserModel = require('../models/user');
+const AWS = require('aws-sdk');
+const path = require('path');
+const fs = require('fs');
+const uuid = require('uuid');
 
 async function handleFileUpload(req, res) {
-  const filePaths = req.files.map(file => file.path);
-  res.json({ filePaths });
-}
+
+  const data = req.body;
+  const fileUp = req.files;
+  try {
+    const s3 = new AWS.S3();
+    const bucketName = 'rasoi';
+
+    const files = req.files;
+
+    const results = [];
+
+    for (const file of files) {
+      const fileExtension = file.originalname.split('.').pop();
+      const uniqueFileName = 'public/uploads/' +`${uuid.v4()}.${fileExtension}`;
+
+      const filePath = file.path;
+      const fileData = fs.readFileSync(filePath);
+
+      const uploadParams = {
+        Bucket: bucketName,
+        Key: uniqueFileName,
+        Body: fileData,
+        ACL: 'public-read'
+      };
+
+      // Upload on s3
+      try {
+        const data = await s3.upload(uploadParams).promise();
+        console.log(`File uploaded successfully. ${data.Location}`);
+        fs.unlinkSync(filePath); // Clean up the temporary file
+        results.push({ success: true, location: data.Location });
+      } catch (err) {
+        console.error(err);
+        results.push({ success: false, error: err });
+      }
+    }
+
+    res.json(results);
+  } catch (err) {
+    res.json({ error: err.message });
+  }
+
+};
 
 async function handleSearch(req, res) {
   try {
@@ -115,6 +159,7 @@ async function handleCreatePost(req, res) {
       recipe_picture: recipe_picture,
     });
 
+    // return res.json({post: newPost});
     // Save the new Post to the database
     const createdPost = await newPost.save();
 
@@ -296,7 +341,6 @@ async function handleUpdateLike(req, res) {
     return res.status(500).json({ error: "Error occured while updating likes " + err });
   }
 }
-
 
 async function handleGetPostDetailsByPostId(req, res) {
   try {
