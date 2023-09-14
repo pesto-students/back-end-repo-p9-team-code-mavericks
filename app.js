@@ -5,7 +5,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const cors = require('cors');
 const {restrictToLoggedInUserOnly} = require('./middlewares/auth');
-const mongodbConnectionString = process.env.MONGODB_ATLAS_CONNECTION_STRING;
+const mongodbConnectionString = 'mongodb+srv://avaneesh:Avaneesh123@cluster1.wfvl0ts.mongodb.net/rasoidb?retryWrites=true&w=majority';
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');

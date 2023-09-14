@@ -3,7 +3,6 @@ FROM node:16-alpine
 
 # Set environment variables
 ENV MONGODB_LOCAL_CONNECTION_STRING = "mongodb://0.0.0.0:27017/rasoiDb";
-ENV MONGODB_ATLAS_CONNECTION_STRING = mongodb+srv://avaneesh:Avaneesh123@cluster1.wfvl0ts.mongodb.net/rasoidb?retryWrites=true&w=majority
 ENV SECRET_KEY = my-secret-key;
 
 # Set the working directory inside the container
