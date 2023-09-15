@@ -12,14 +12,14 @@ async function handleCountFollowers(req, res) {
   const user = req.params.username;
   let userId;
 
-  try{
-    const userRec = await UserModel.findOne({username: user});
-    if(!userRec){
-      return res.status(404).json({error:'No such user exists'});
+  try {
+    const userRec = await UserModel.findOne({ username: user });
+    if (!userRec) {
+      return res.status(404).json({ error: 'No such user exists' });
     }
     userId = userRec._id;
-  } catch(err) {
-    return res.status(500).json({error: 'Internal server error: '+err});
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error: ' + err });
   }
 
   try {
@@ -32,8 +32,8 @@ async function handleCountFollowers(req, res) {
     console.log(`Number of followers for ${user}: ${followerCount}`);
     return res.status(200).json({ followers_count: followerCount });
   } catch (err) {
-    console.error('Error counting followers:'+err);
-    res.status(500).json({ error: 'An error occurred while counting followers: '+err });
+    console.error('Error counting followers:' + err);
+    res.status(500).json({ error: 'An error occurred while counting followers: ' + err });
   }
 }
 
@@ -41,14 +41,14 @@ async function handleCountFollowing(req, res) {
   const user = req.params.username;
   let userId;
 
-  try{
-    const userRec = await UserModel.findOne({username: user});
-    if(!userRec){
-      return res.status(404).json({error:'No such user exists'});
+  try {
+    const userRec = await UserModel.findOne({ username: user });
+    if (!userRec) {
+      return res.status(404).json({ error: 'No such user exists' });
     }
     userId = userRec._id;
-  } catch(err) {
-    return res.status(500).json({error: 'Internal server error: '+err});
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error: ' + err });
   }
 
   try {
@@ -70,21 +70,21 @@ async function handleCountPosts(req, res) {
   const user = req.params.username;
   let userId;
 
-  try{
-    const userRec = await UserModel.findOne({username: user});
-    if(!userRec){
-      return res.status(404).json({error:'No such user exists'});
+  try {
+    const userRec = await UserModel.findOne({ username: user });
+    if (!userRec) {
+      return res.status(404).json({ error: 'No such user exists' });
     }
     userId = userRec._id;
-  } catch(err) {
-    return res.status(500).json({error: 'Internal server error: '+err});
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error: ' + err });
   }
 
   try {
     const PostsRec = await PostsModel.find({ author: userId });
 
     if (!PostsRec) {
-      return res.status(200).json({ posts_count: 0});
+      return res.status(200).json({ posts_count: 0 });
     }
 
     const PostsCount = PostsRec.length;
@@ -100,14 +100,14 @@ async function handleCountBookmarks(req, res) {
   const user = req.params.username;
   let userId;
 
-  try{
-    const userRec = await UserModel.findOne({username: user});
-    if(!userRec){
-      return res.status(404).json({error:'No such user exists'});
+  try {
+    const userRec = await UserModel.findOne({ username: user });
+    if (!userRec) {
+      return res.status(404).json({ error: 'No such user exists' });
     }
     userId = userRec._id;
-  } catch(err) {
-    return res.status(500).json({error: 'Internal server error: '+err});
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error: ' + err });
   }
 
   try {
@@ -159,14 +159,14 @@ async function handleUnfollowUser(req, res) {
   const user = req.params.username;
   let unfollowUserId;
 
-  try{
-    const userRec = await UserModel.findOne({username: user});
-    if(!userRec){
-      return res.status(404).json({error:'No such user exists'});
+  try {
+    const userRec = await UserModel.findOne({ username: user });
+    if (!userRec) {
+      return res.status(404).json({ error: 'No such user exists' });
     }
     unfollowUserId = userRec._id;
-  } catch(err) {
-    return res.status(500).json({error: 'Internal server error: '+err});
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error: ' + err });
   }
 
   try {
@@ -232,16 +232,16 @@ async function handleGetFollowersList(req, res) {
     const allFollowersRec = await FollowersModel.findOne({ userId: lookForUserId });
     if (allFollowersRec) {
       const allFollowersId = allFollowersRec.followers;
-      let allFollowers = await UserModel.find({ _id: { $in: allFollowersId } }, { _id: 1, username: 1, firstname: 1, lastname: 1});
+      let allFollowers = await UserModel.find({ _id: { $in: allFollowersId } }, { _id: 1, username: 1, firstname: 1, lastname: 1 });
 
       if (ofUser) {
-        const followingRec = await FollowingsModel.findOne({ userId: new mongoose.Types.ObjectId(loggedInUserId)});
+        const followingRec = await FollowingsModel.findOne({ userId: new mongoose.Types.ObjectId(loggedInUserId) });
         if (followingRec) {
           const followingList = followingRec.followings.map(id => id.toString());
           let allFollowersModifiedResp;
           allFollowers = allFollowers.map(follower => {
             const followBack = followingList.includes(follower._id.toString());
-            return { firstname: follower.firstname, lastname: follower.lastname, username: follower.username, followback: followBack}; // 'toObject()' converts the Mongoose document to a plain JavaScript object
+            return { firstname: follower.firstname, lastname: follower.lastname, username: follower.username, followback: followBack }; // 'toObject()' converts the Mongoose document to a plain JavaScript object
           });
         }
       }
@@ -326,6 +326,7 @@ async function handleLoggedInUser(req, res) {
 }
 
 async function handleUserSignUp(req, res) {
+  
   /*try {
     const { firstname, lastname, contact, email, password, username } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -356,8 +357,25 @@ async function handleUserSignUp(req, res) {
     }
     return res.status(500).json({ error: err.message });
   }*/
+
   try {
-    const { password, username } = req.body;
+    const { password, username, isGoogleLogin } = req.body;
+    // Check if the password length is less than or equal to 5
+    if (password.length <= 5) {
+      return res.status(400).json({ error: 'Password must be longer than 5 characters.' });
+    }
+
+    // Use a regular expression to check for at least one special character, one lowercase letter,
+    // one uppercase letter, and one number
+
+    const passwordRegex = /^(?=.*[!@#$%^&*()])(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
+
+    if(!isGoogleLogin){
+      if (!passwordRegex.test(password)) {
+        return res.status(400).json({ error: 'Password must contain at least one special character, one lowercase letter, one uppercase letter, and one number.' });
+      }
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     // Create a new user object based on the UserModel
     const newUser = new UserModel({
@@ -460,7 +478,7 @@ async function handleFollowUser(req, res) {
     return res.json({ message: "500: Internal server error." });
   }
 
-  return res.status(200).json({ message: "You have followed the user succesfully!", status:true});
+  return res.status(200).json({ message: "You have followed the user succesfully!", status: true });
 }
 
 async function handleIsFollowing(req, res) {
@@ -492,7 +510,7 @@ async function handleIsFollowing(req, res) {
     }
   } catch (error) {
     console.log("Something went wrong while trying to find user by its username to follow.");
-    return res.json({ error: "500: Internal server error."+error});
+    return res.json({ error: "500: Internal server error." + error });
   }
 
 }
@@ -553,14 +571,44 @@ async function handleVerifyUsernameExists(req, res) {
   try {
     const userRec = await UserModel.findOne({ username: userName }, { _id: 0 });
     if (!userRec) {
-      return res.status(200).json({ can_add_username: true});
+      return res.status(200).json({ can_add_username: true });
     }
     else
-      return res.status(200).json({can_add_username: false});
-  } catch(err){
-    return res.status(500).json("Internal server error: "+err);
+      return res.status(200).json({ can_add_username: false });
+  } catch (err) {
+    return res.status(500).json("Internal server error: " + err);
   }
 }
+
+async function handleFinishSignUp (req, res) {
+  const {username, email, firstname, lastname, contact, interests } = req.body;
+
+  try {
+    // Find the user by username
+    const user = await UserModel.findOne({ username });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Update the user fields
+    user.email = email;
+    user.firstname = firstname;
+    user.lastname = lastname;
+    user.contact = contact;
+    user.interests = interests;
+
+    // Save the updated user
+    await user.save();
+
+    res.json({ message: 'User information updated successfully' });
+  } catch (err) {
+    console.error('Error updating user:', err);
+    res.status(500).json({ err: 'Server error: ' + err });
+  }
+
+}
+
 
 module.exports = {
   handleIsFollowing,
@@ -581,4 +629,5 @@ module.exports = {
   handleCountFollowing,
   handleCountPosts,
   handleVerifyUsernameExists,
+  handleFinishSignUp,
 }

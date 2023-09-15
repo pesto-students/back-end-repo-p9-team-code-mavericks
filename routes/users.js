@@ -41,7 +41,7 @@ router.get('/followings/:ofuser', handleGetFollowingsList);
 router.get('/bookmarklist', handleGetBookmarkList);
 router.get('/unfollow/:username', handleUnfollowUser);
 router.patch('/intrests/', handleInterests);
-router.get('verify/:username', handleVerifyUsernameExists)
+router.get('verify/:username', handleVerifyUsernameExists);
 
 
 module.exports = router;
