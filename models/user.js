@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema({
   first_time_login: {type: Boolean, default: true},
   signup_completed: {type: Boolean, default: false},
   blocked_by_admin: {type: Boolean, default: false},
-  about: {type: String},
+  about: {type: String, default: ''},
   moto: {type: String},
 }, {
   timestamps: true,

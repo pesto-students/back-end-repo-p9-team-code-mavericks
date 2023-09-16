@@ -516,7 +516,7 @@ async function handleGetUserDetailsByUsername(req, res) {
       return res.status(404).json({ Error: "User with such username not found." });
     }
     else {
-      const respObj = { username: userRec.username, firstname: userRec.firstname, lastname: userRec.lastname };
+      const respObj = { username: userRec.username, firstname: userRec.firstname, lastname: userRec.lastname, ispublic: userRec.is_public };
       if (!userRec.is_public)
         return res.status(200).json({ user_details: respObj });
       if (!userRec.email_hidden)
@@ -586,6 +586,38 @@ async function handleFinishSignUp (req, res) {
 }
 
 
+async function handleSaveProfile(req, res) {
+  const username = req.params.username;
+  const { firstname, lastname, contact, about, is_contact_public, is_profile_public, is_email_public, is_followers_public, is_following_public } = req.body;
+  try {
+    const userRec = await UserModel.findOne({ username: username });
+    if (!userRec) {
+      return res.status(200).json({ error: 'Cannot find user' });
+    }
+
+    // return res.json({firstname: firstname, is_profile_public: is_profile_public, about: about})
+    // Update user details
+    userRec.firstname = firstname;
+    userRec.lastname = lastname;
+    userRec.contact = contact;
+    userRec.about = about;
+    userRec.contact_hidden = !is_contact_public;
+    userRec.is_public = is_profile_public;
+    userRec.email_hidden = !is_email_public;
+    userRec.followers_hidden = !is_followers_public;
+    userRec.following_hidden = !is_following_public;
+
+    // Save the updated user record
+    await userRec.save();
+
+    return res.status(200).json({ message: 'User profile updated successfully' });
+
+  } catch (err) {
+    return res.status(500).json({error: "Internal server error: " + err});
+  }
+}
+
+
 module.exports = {
   handleIsFollowing,
   handleUserSignUp,
@@ -606,4 +638,5 @@ module.exports = {
   handleCountPosts,
   handleVerifyUsernameExists,
   handleFinishSignUp,
+  handleSaveProfile,
 }
