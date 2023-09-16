@@ -18,7 +18,9 @@ const userSchema = new mongoose.Schema({
   following_hidden: {type: Boolean, default: false},
   first_time_login: {type: Boolean, default: true},
   signup_completed: {type: Boolean, default: false},
-  blocked_by_admin: {type: Boolean, default: false}
+  blocked_by_admin: {type: Boolean, default: false},
+  about: {type: String},
+  moto: {type: String},
 }, {
   timestamps: true,
 },);
